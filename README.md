@@ -1,4 +1,4 @@
-# Proxy Server Example
+# Encrypted Request Proxying with the Tinfoil
 
 A small example that demonstrates how to proxy inference requests through third-party servers while preserving end-to-end encryption using the [Encrypted HTTP Body Protocol](https://github.com/tinfoilsh/encrypted-http-body-protocol).
 
@@ -10,6 +10,8 @@ This example contains two pieces:
 the Tinfoil enclaves for inference.
 - `main.ts`: a few lines of TypeScript that instantiates the Tinfoil `SecureClient`, sends
   `/v1/chat/completions`, and streams the response into the page.
+
+> **Note:** The proxy can be implemented in any language (Go, Rust, Python, etc.) with no special dependencies - it only requires basic HTTP and header parsing.
 
 In this example, the Go proxy intercepts `/v1/chat/completions` requests to:
 - Inspect and preserve EHBP-specific headers (`Ehbp-Client-Public-Key`, `Ehbp-Encapsulated-Key`, `Ehbp-Fallback`)
