@@ -131,7 +131,7 @@ async function sendMessage(): Promise<void> {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
         // Optional: Add custom headers that your proxy can read and strip
-        "Your-Custom-Header": "custom-value",
+        "Your-Custom-Request-Header": "custom-value",
       },
       body: JSON.stringify({
         model: "gpt-oss-120b", // switch model to any model available in the tinfoil inference api: https://tinfoil.sh/inference
@@ -145,7 +145,7 @@ async function sendMessage(): Promise<void> {
     }
 
     // Optional: Read custom headers from the response
-    // const customHeader = response.headers.get("Your-Custom-Header");
+    // const customHeader = response.headers.get("Your-Custom-Response-Header");
 
     const assistantBubble = appendMessage("", "assistant");
     const contentType = response.headers.get("Content-Type") ?? "";

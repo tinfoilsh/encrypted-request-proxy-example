@@ -11,10 +11,10 @@ const (
 	upstreamURL = "https://ehbp.inf6.tinfoil.sh/v1/chat/completions"
 
 	// Add custom headers to allowHeaders to allow them through CORS
-	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Client-Public-Key, Ehbp-Encapsulated-Key, Your-Custom-Header"
+	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Client-Public-Key, Ehbp-Encapsulated-Key, Your-Custom-Request-Header"
 
 	// Add custom headers to exposeHeaders to make them readable by the browser
-	exposeHeaders = "Ehbp-Encapsulated-Key, Ehbp-Client-Public-Key, Ehbp-Fallback, Your-Custom-Header"
+	exposeHeaders = "Ehbp-Encapsulated-Key, Ehbp-Client-Public-Key, Ehbp-Fallback, Your-Custom-Response-Header"
 )
 
 // These encryption headers must be preserved for the protocol to work
@@ -68,8 +68,8 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Optional: Read and strip custom headers for logging, routing, or business logic
 	// These headers are not forwarded to the upstream server
-	if customHeader := r.Header.Get("Your-Custom-Header"); customHeader != "" {
-		log.Printf("Custom header received: %s", customHeader)
+	if customHeader := r.Header.Get("Your-Custom-Request-Header"); customHeader != "" {
+		log.Printf("Custom request header received: %s", customHeader)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -87,7 +87,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Optional: Add custom headers to the response based on proxy logic
-	w.Header().Set("Your-Custom-Header", "response-value")
+	w.Header().Set("Your-Custom-Response-Header", "response-value")
 	if te := resp.Header.Get("Transfer-Encoding"); te != "" {
 		w.Header().Set("Transfer-Encoding", te)
 		w.Header().Del("Content-Length")
