@@ -1,16 +1,22 @@
-# Request Body Encryption Example
+# Proxy Server Example
 
-A small example that demonstrates how to use the Tinfoil Request Body Encryption feature from a simple browser-based chat. It
-contains two pieces:
+A small example that demonstrates how to proxy inference requests through third-party servers while preserving end-to-end encryption using the [Encrypted HTTP Body Protocol](https://github.com/tinfoilsh/encrypted-http-body-protocol).
+
+The protocol encrypts HTTP message bodies using Hybrid Public Key Encryption (HPKE) while preserving routing metadata, allowing proxies to inspect headers and route requests while keeping the actual payload encrypted end-to-end.
+
+This example contains two pieces:
 
 - `main.go`: a Go proxy that adds your TINFOIL_API_KEY and forwards chat completions to
 the Tinfoil enclaves for inference.
 - `main.ts`: a few lines of TypeScript that instantiates the Tinfoil `SecureClient`, sends
   `/v1/chat/completions`, and streams the response into the page.
 
-In this example, the Go proxy only handles `/v1/chat/completions`. All other requests are handled directly by the Tinfoil backend and enclaves.
+In this example, the Go proxy intercepts `/v1/chat/completions` requests to:
+- Inspect and preserve EHBP-specific headers (`Ehbp-Client-Public-Key`, `Ehbp-Encapsulated-Key`, `Ehbp-Fallback`)
+- Add your `TINFOIL_API_KEY` as the Authorization header
+- Forward the encrypted request body to the Tinfoil enclave at `https://ehbp.inf6.tinfoil.sh/v1/chat/completions`
 
-The Tinfoil enclave that all chat completions requests must be forwarded to is currently accessible at `https://ehbp.inf6.tinfoil.sh/v1/chat/completions`.
+The proxy can see routing metadata but cannot decrypt the request/response bodies, which remain encrypted end-to-end between the browser and the Tinfoil enclave.
 
 ## Prerequisites
 
