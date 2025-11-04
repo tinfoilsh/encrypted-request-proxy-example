@@ -1,4 +1,4 @@
-# Encrypted Request Proxying with the Tinfoil
+# Encrypted Request Proxying with Tinfoil
 
 A small example that demonstrates how to proxy inference requests through third-party servers while preserving end-to-end encryption using the [Encrypted HTTP Body Protocol](https://github.com/tinfoilsh/encrypted-http-body-protocol).
 
