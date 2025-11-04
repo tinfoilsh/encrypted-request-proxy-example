@@ -3,6 +3,6 @@
     "vite": "^7.1.9"
   },
   "dependencies": {
-    "tinfoil": "^0.9.1"
+    "tinfoil": "^0.10.9"
   }
 }
