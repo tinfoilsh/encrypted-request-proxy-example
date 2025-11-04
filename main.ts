@@ -14,7 +14,9 @@ const messages = requireElement<HTMLDivElement>("#messages");
 const input = requireElement<HTMLInputElement>("#messageInput");
 const sendButton = requireElement<HTMLButtonElement>("#sendBtn");
 
-// Change baseURL to your own API server's URL
+// Configure the client to connect to your proxy server
+// baseURL: Your proxy server that adds authentication and custom logic
+// enclaveURL: The Tinfoil enclave endpoint for encrypted inference
 const client = new SecureClient({
   baseURL: "http://localhost:8080/",
   enclaveURL: "https://ehbp.inf6.tinfoil.sh/v1/",
@@ -120,8 +122,7 @@ async function sendMessage(): Promise<void> {
   sendButton.disabled = true;
 
   try {
-    // We need to block on client readiness in order to perform verification
-    // and fetch request encryption keys from the enclave
+    // Wait for the client to fetch encryption keys and perform verification
     await client.ready();
 
     const response = await client.fetch("/v1/chat/completions", {
@@ -129,6 +130,8 @@ async function sendMessage(): Promise<void> {
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
+        // Optional: Add custom headers that your proxy can read and strip
+        "Your-Custom-Header": "custom-value",
       },
       body: JSON.stringify({
         model: "gpt-oss-120b", // switch model to any model available in the tinfoil inference api: https://tinfoil.sh/inference
@@ -140,6 +143,9 @@ async function sendMessage(): Promise<void> {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
+
+    // Optional: Read custom headers from the response
+    // const customHeader = response.headers.get("Your-Custom-Header");
 
     const assistantBubble = appendMessage("", "assistant");
     const contentType = response.headers.get("Content-Type") ?? "";
