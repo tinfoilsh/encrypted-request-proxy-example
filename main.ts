@@ -19,8 +19,8 @@ const sendButton = requireElement<HTMLButtonElement>("#sendBtn");
 // enclaveURL: The Tinfoil enclave endpoint for encrypted inference
 const client = new SecureClient({
   baseURL: "http://localhost:8080/",
-  enclaveURL: "https://ehbp.inf6.tinfoil.sh/v1/",
-  configRepo: "tinfoilsh/confidential-inference-proxy-hpke",
+  enclaveURL: "https://inference.tinfoil.sh/v1/",
+  configRepo: "tinfoilsh/confidential-model-router",
 });
 
 function appendMessage(text: string, role: Role): HTMLDivElement {
