@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	upstreamURL = "https://ehbp.inf6.tinfoil.sh/v1/chat/completions"
+	upstreamURL = "https://inference.tinfoil.sh/v1/chat/completions"
 
 	// Add custom headers to allowHeaders to allow them through CORS
 	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Client-Public-Key, Ehbp-Encapsulated-Key, Your-Custom-Request-Header"
