@@ -11,16 +11,16 @@ const (
 	upstreamURL = "https://inference.tinfoil.sh/v1/chat/completions"
 
 	// Add custom headers to allowHeaders to allow them through CORS
-	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Client-Public-Key, Ehbp-Encapsulated-Key, Your-Custom-Request-Header"
+	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Encapsulated-Key, Your-Custom-Request-Header"
 
 	// Add custom headers to exposeHeaders to make them readable by the browser
-	exposeHeaders = "Ehbp-Encapsulated-Key, Ehbp-Client-Public-Key, Ehbp-Fallback, Your-Custom-Response-Header"
+	exposeHeaders = "Ehbp-Response-Nonce, Ehbp-Fallback, Your-Custom-Response-Header"
 )
 
 // These encryption headers must be preserved for the protocol to work
 var (
-	tinfoilRequestHeaders  = []string{"Ehbp-Client-Public-Key", "Ehbp-Encapsulated-Key"}
-	tinfoilResponseHeaders = []string{"Ehbp-Encapsulated-Key", "Ehbp-Client-Public-Key", "Ehbp-Fallback"}
+	tinfoilRequestHeaders  = []string{"Ehbp-Encapsulated-Key"}
+	tinfoilResponseHeaders = []string{"Ehbp-Response-Nonce", "Ehbp-Fallback"}
 )
 
 func main() {
