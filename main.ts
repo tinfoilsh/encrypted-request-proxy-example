@@ -17,6 +17,7 @@ const sendButton = requireElement<HTMLButtonElement>("#sendBtn");
 // Configure the client to connect to your proxy server
 // baseURL: Your proxy server that adds authentication and custom logic
 // The SDK automatically fetches enclave URL and config from the router
+// The enclave URL is sent to the proxy via the X-Tinfoil-Enclave-Url header
 const client = new SecureClient({
   baseURL: "http://localhost:8080/",
 });

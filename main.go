@@ -8,10 +8,11 @@ import (
 )
 
 const (
-	upstreamURL = "https://inference.tinfoil.sh/v1/chat/completions"
+	// Header containing the enclave URL that the client verified
+	enclaveURLHeader = "X-Tinfoil-Enclave-Url"
 
 	// Add custom headers to allowHeaders to allow them through CORS
-	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Encapsulated-Key, Your-Custom-Request-Header"
+	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Encapsulated-Key, X-Tinfoil-Enclave-Url, Your-Custom-Request-Header"
 
 	// Add custom headers to exposeHeaders to make them readable by the browser
 	exposeHeaders = "Ehbp-Response-Nonce, Ehbp-Fallback, Your-Custom-Response-Header"
@@ -19,8 +20,8 @@ const (
 
 // These encryption headers must be preserved for the protocol to work
 var (
-	tinfoilRequestHeaders  = []string{"Ehbp-Encapsulated-Key"}
-	tinfoilResponseHeaders = []string{"Ehbp-Response-Nonce", "Ehbp-Fallback"}
+	ehbpRequestHeaders  = []string{"Ehbp-Encapsulated-Key"}
+	ehbpResponseHeaders = []string{"Ehbp-Response-Nonce", "Ehbp-Fallback"}
 )
 
 func main() {
@@ -43,6 +44,15 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get upstream URL from the X-Tinfoil-Enclave-Url header
+	upstreamBase := r.Header.Get(enclaveURLHeader)
+	if upstreamBase == "" {
+		log.Println("Error: X-Tinfoil-Enclave-Url header not provided")
+		http.Error(w, "X-Tinfoil-Enclave-Url header required", http.StatusBadRequest)
+		return
+	}
+	upstreamURL := upstreamBase + r.URL.Path
+
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, upstreamURL, r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -64,7 +74,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	// Required: Copy encryption headers from the client request
-	copyHeaders(req.Header, r.Header, tinfoilRequestHeaders...)
+	copyHeaders(req.Header, r.Header, ehbpRequestHeaders...)
 
 	// Optional: Read and strip custom headers for logging, routing, or business logic
 	// These headers are not forwarded to the upstream server
@@ -80,7 +90,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	// Required: Copy encryption headers from the upstream response
-	copyHeaders(w.Header(), resp.Header, tinfoilResponseHeaders...)
+	copyHeaders(w.Header(), resp.Header, ehbpResponseHeaders...)
 
 	if ct := resp.Header.Get("Content-Type"); ct != "" {
 		w.Header().Set("Content-Type", ct)
