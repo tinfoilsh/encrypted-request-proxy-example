@@ -14,9 +14,10 @@ the Tinfoil enclaves for inference.
 > **Note:** The proxy can be implemented in any language (Go, Rust, Python, etc.) with no special dependencies - it only requires basic HTTP and header parsing.
 
 In this example, the Go proxy intercepts `/v1/chat/completions` requests to:
+- Read the `X-Tinfoil-Enclave-Url` header to determine which enclave the client verified
 - Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` and `Ehbp-Fallback` for responses)
 - Add your `TINFOIL_API_KEY` as the Authorization header
-- Forward the encrypted request body to the Tinfoil enclave at `https://inference.tinfoil.sh/v1/chat/completions`
+- Forward the encrypted request body to the verified Tinfoil enclave
 
 The proxy can see routing metadata but cannot decrypt the request/response bodies, which remain encrypted end-to-end between the browser and the Tinfoil enclave.
 
@@ -44,9 +45,8 @@ error handling minimal so it is easy to read and adapt.
 
 - Change the `baseURL` or model in `main.ts` if you want to point at a different
   proxy server or model. Defaults are `http://localhost:8080` and `gpt-oss-120b`.
-- By default, the SDK fetches encryption keys directly from the enclave. To have
-  your proxy also handle key fetching, set both `baseURL` and `enclaveURL` to
-  your proxy URL. Your proxy must then forward the key fetching requests to the enclave.
+- The SDK automatically fetches enclave configuration from the router and sends
+  the enclave URL to the proxy via the `X-Tinfoil-Enclave-Url` header.
 
 ### Advanced usage with unverified client
 
