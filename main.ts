@@ -16,11 +16,9 @@ const sendButton = requireElement<HTMLButtonElement>("#sendBtn");
 
 // Configure the client to connect to your proxy server
 // baseURL: Your proxy server that adds authentication and custom logic
-// enclaveURL: The Tinfoil enclave endpoint for encrypted inference
+// The SDK automatically fetches enclave URL and config from the router
 const client = new SecureClient({
   baseURL: "http://localhost:8080/",
-  enclaveURL: "https://inference.tinfoil.sh/v1/",
-  configRepo: "tinfoilsh/confidential-model-router",
 });
 
 function appendMessage(text: string, role: Role): HTMLDivElement {

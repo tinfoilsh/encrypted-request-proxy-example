@@ -14,7 +14,7 @@ the Tinfoil enclaves for inference.
 > **Note:** The proxy can be implemented in any language (Go, Rust, Python, etc.) with no special dependencies - it only requires basic HTTP and header parsing.
 
 In this example, the Go proxy intercepts `/v1/chat/completions` requests to:
-- Inspect and preserve EHBP-specific headers (`Ehbp-Client-Public-Key`, `Ehbp-Encapsulated-Key`, `Ehbp-Fallback`)
+- Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` and `Ehbp-Fallback` for responses)
 - Add your `TINFOIL_API_KEY` as the Authorization header
 - Forward the encrypted request body to the Tinfoil enclave at `https://inference.tinfoil.sh/v1/chat/completions`
 
