@@ -15,13 +15,13 @@ const (
 	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Encapsulated-Key, X-Tinfoil-Enclave-Url, Your-Custom-Request-Header"
 
 	// Add custom headers to exposeHeaders to make them readable by the browser
-	exposeHeaders = "Ehbp-Response-Nonce, Ehbp-Fallback, Your-Custom-Response-Header"
+	exposeHeaders = "Ehbp-Response-Nonce, Your-Custom-Response-Header"
 )
 
 // These encryption headers must be preserved for the protocol to work
 var (
 	ehbpRequestHeaders  = []string{"Ehbp-Encapsulated-Key"}
-	ehbpResponseHeaders = []string{"Ehbp-Response-Nonce", "Ehbp-Fallback"}
+	ehbpResponseHeaders = []string{"Ehbp-Response-Nonce"}
 )
 
 func main() {

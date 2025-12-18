@@ -15,7 +15,7 @@ the Tinfoil enclaves for inference.
 
 In this example, the Go proxy intercepts `/v1/chat/completions` requests to:
 - Read the `X-Tinfoil-Enclave-Url` header to determine which enclave the client verified
-- Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` and `Ehbp-Fallback` for responses)
+- Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` for responses)
 - Add your `TINFOIL_API_KEY` as the Authorization header
 - Forward the encrypted request body to the verified Tinfoil enclave
 
