@@ -44,6 +44,9 @@ error handling minimal so it is easy to read and adapt.
 
 - Change the `baseURL` or model in `main.ts` if you want to point at a different
   proxy server or model. Defaults are `http://localhost:8080` and `gpt-oss-120b`.
+- By default, the SDK fetches encryption keys directly from the enclave. To have
+  your proxy also handle key fetching, set both `baseURL` and `enclaveURL` to
+  your proxy URL. Your proxy must then forward the key fetching requests to the enclave.
 
 ### Advanced usage with unverified client
 
