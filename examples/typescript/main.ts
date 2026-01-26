@@ -124,23 +124,39 @@ async function sendMessage(): Promise<void> {
     // Wait for the client to fetch encryption keys and perform verification
     await client.ready();
 
-    const response = await client.fetch("/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        // Optional: Add custom headers that your proxy can read and strip
-        "Your-Custom-Request-Header": "custom-value",
-      },
-      body: JSON.stringify({
-        model: "gpt-oss-120b", // switch model to any model available in the tinfoil inference api: https://tinfoil.sh/inference
-        messages: [{ role: "user", content: text }],
-        stream: true,
-      }),
+    const requestBody = JSON.stringify({
+      model: "gpt-oss-120b", // switch model to any model available in the tinfoil inference api: https://tinfoil.sh/inference
+      messages: [{ role: "user", content: text }],
+      stream: true,
     });
 
+    let response: Response;
+    try {
+      response = await client.fetch("/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+          // Optional: Add custom headers that your proxy can read and strip
+          "Your-Custom-Request-Header": "custom-value",
+        },
+        body: requestBody,
+      });
+    } catch (fetchError) {
+      // If the proxy returns an unencrypted error (missing EHBP headers),
+      // try a plain fetch to get the actual error message
+      const plainResponse = await fetch("http://localhost:8080/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: requestBody,
+      });
+      const errorText = await plainResponse.text();
+      throw new Error(errorText || (fetchError instanceof Error ? fetchError.message : "Request failed"));
+    }
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(errorText || `HTTP ${response.status}`);
     }
 
     // Optional: Read custom headers from the response
@@ -161,7 +177,8 @@ async function sendMessage(): Promise<void> {
     assistantBubble.textContent = json.choices?.[0]?.message?.content ?? "No content";
   } catch (error) {
     console.error("Chat request failed", error);
-    appendMessage("Error: Could not connect to server", "assistant");
+    const message = error instanceof Error ? error.message : "Could not connect to server";
+    appendMessage(`Error: ${message}`, "assistant");
   } finally {
     sendButton.disabled = false;
     input.focus();
