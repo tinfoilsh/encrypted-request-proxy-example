@@ -44,6 +44,14 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check configuration errors first (before request-specific validation)
+	apiKey := os.Getenv("TINFOIL_API_KEY")
+	if apiKey == "" {
+		log.Println("Error: TINFOIL_API_KEY environment variable not set")
+		http.Error(w, "TINFOIL_API_KEY not set", http.StatusInternalServerError)
+		return
+	}
+
 	// Get upstream URL from the X-Tinfoil-Enclave-Url header
 	upstreamBase := r.Header.Get(enclaveURLHeader)
 	if upstreamBase == "" {
@@ -64,13 +72,6 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		req.Header.Set("Accept", accept)
 	}
 
-	// Add your Tinfoil API key as the Authorization header
-	apiKey := os.Getenv("TINFOIL_API_KEY")
-	if apiKey == "" {
-		log.Println("Error: TINFOIL_API_KEY environment variable not set")
-		http.Error(w, "TINFOIL_API_KEY not set", http.StatusInternalServerError)
-		return
-	}
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	// Required: Copy encryption headers from the client request
