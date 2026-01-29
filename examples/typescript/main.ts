@@ -16,10 +16,12 @@ const sendButton = requireElement<HTMLButtonElement>("#sendBtn");
 
 // Configure the client to connect to your proxy server
 // baseURL: Your proxy server that adds authentication and custom logic
-// The SDK automatically fetches enclave URL and config from the router
+// attestationBundleURL: Route attestation requests through the proxy too
+// The SDK fetches enclave config from the attestation bundle
 // The enclave URL is sent to the proxy via the X-Tinfoil-Enclave-Url header
 const client = new SecureClient({
   baseURL: "http://localhost:8080/",
+  attestationBundleURL: "http://localhost:8080",
 });
 
 function appendMessage(text: string, role: Role): HTMLDivElement {
