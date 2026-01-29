@@ -26,6 +26,7 @@ var (
 
 func main() {
 	http.HandleFunc("/v1/chat/completions", proxyHandler)
+	http.HandleFunc("/v1/responses", proxyHandler)
 	http.HandleFunc("/attestation", attestationHandler)
 
 	log.Println("proxy listening on :8080")

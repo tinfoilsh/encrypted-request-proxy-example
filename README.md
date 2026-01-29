@@ -24,7 +24,7 @@ The protocol encrypts HTTP message bodies using Hybrid Public Key Encryption (HP
 In this example, the Go proxy:
 
 - Serves `/attestation` to proxy attestation bundle requests from Tinfoil's ATC
-- Intercepts `/v1/chat/completions` requests to:
+- Intercepts `/v1/chat/completions` and `/v1/responses` requests to:
   - Read the `X-Tinfoil-Enclave-Url` header to determine which enclave the client verified
   - Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` for responses)
   - Add your `TINFOIL_API_KEY` as the Authorization header
@@ -93,6 +93,7 @@ If you're building your own proxy server, here's what you need to implement:
 |------|--------|-------------|
 | `/attestation` | GET | Proxy to `https://atc.tinfoil.sh/attestation` |
 | `/v1/chat/completions` | POST | Forward to the enclave URL from the `X-Tinfoil-Enclave-Url` header |
+| `/v1/responses` | POST | Forward to the enclave URL from the `X-Tinfoil-Enclave-Url` header |
 
 ### Required Headers
 
