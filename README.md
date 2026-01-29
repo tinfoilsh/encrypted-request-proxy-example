@@ -21,11 +21,14 @@ The protocol encrypts HTTP message bodies using Hybrid Public Key Encryption (HP
 
 > **Note:** The proxy can be implemented in any language (Go, Rust, Python, etc.) with no special dependencies - it only requires basic HTTP and header parsing.
 
-In this example, the Go proxy intercepts `/v1/chat/completions` requests to:
-- Read the `X-Tinfoil-Enclave-Url` header to determine which enclave the client verified
-- Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` for responses)
-- Add your `TINFOIL_API_KEY` as the Authorization header
-- Forward the encrypted request body to the verified Tinfoil enclave
+In this example, the Go proxy:
+
+- Serves `/attestation` to proxy attestation bundle requests from Tinfoil's ATC
+- Intercepts `/v1/chat/completions` requests to:
+  - Read the `X-Tinfoil-Enclave-Url` header to determine which enclave the client verified
+  - Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` for responses)
+  - Add your `TINFOIL_API_KEY` as the Authorization header
+  - Forward the encrypted request body to the verified Tinfoil enclave
 
 The proxy can see routing metadata but cannot decrypt the request/response bodies, which remain encrypted end-to-end between the client and the Tinfoil enclave.
 
@@ -56,7 +59,9 @@ watch the assistant stream its reply.
 
 - Change the `baseURL` or model in `main.ts` if you want to point at a different
   proxy server or model. Defaults are `http://localhost:8080` and `gpt-oss-120b`.
-- The SDK automatically fetches enclave configuration from the router and sends
+- The `attestationBundleURL` option routes attestation requests through the proxy,
+  allowing all traffic to flow through a single endpoint.
+- The SDK fetches enclave configuration from the attestation bundle and sends
   the enclave URL to the proxy via the `X-Tinfoil-Enclave-Url` header.
 
 ## Running the Swift Example
@@ -78,10 +83,67 @@ The Swift SDK will:
 3. Set up EHBP encryption using the verified public key
 4. Send requests to the proxy at `http://localhost:8080` with the `X-Tinfoil-Enclave-Url` header
 
-## Advanced Usage
+## Implementing Your Own Proxy
 
-### Unverified Client (TypeScript)
+If you're building your own proxy server, here's what you need to implement:
 
-**Caution:** This should only be used if you have alternate ways of performing client verification. This bypasses verification checks.
+### Endpoints
 
-In `main.ts`, replace `SecureClient` with `UnverifiedClient`. Run as usual.
+| Path | Method | Description |
+|------|--------|-------------|
+| `/attestation` | GET | Proxy to `https://atc.tinfoil.sh/attestation` |
+| `/v1/chat/completions` | POST | Forward to the enclave URL from the `X-Tinfoil-Enclave-Url` header |
+
+### Required Headers
+
+These headers must be preserved for the EHBP protocol to work:
+
+| Direction | Header | Purpose |
+|-----------|--------|---------|
+| Request → Upstream | `X-Tinfoil-Enclave-Url` | Contains the verified enclave URL; use as the upstream base URL |
+| Request → Upstream | `Ehbp-Encapsulated-Key` | HPKE encapsulated key for the enclave to decrypt the request |
+| Response → Client | `Ehbp-Response-Nonce` | Nonce for the client to decrypt the response |
+
+### CORS (for browser clients)
+
+If your proxy serves browser clients, configure CORS to:
+
+- Allow headers: `Ehbp-Encapsulated-Key`, `X-Tinfoil-Enclave-Url`
+- Expose headers: `Ehbp-Response-Nonce`
+
+### Request Flow
+
+```
+┌────────┐     ┌───────┐     ┌─────────────┐     ┌─────────┐
+│ Client │────▶│ Proxy │────▶│ atc.tinfoil │     │ Enclave │
+└────────┘     └───────┘     └─────────────┘     └─────────┘
+    │              │                                  │
+    │ GET /attestation                                │
+    │─────────────▶│ GET /attestation                 │
+    │              │─────────────────▶│               │
+    │              │◀─────────────────│               │
+    │◀─────────────│ attestation bundle               │
+    │              │                                  │
+    │  (client verifies enclave attestation)          │
+    │              │                                  │
+    │ POST /v1/chat/completions                       │
+    │ + X-Tinfoil-Enclave-Url: https://enclave.example.com
+    │ + Ehbp-Encapsulated-Key: <key>                  │
+    │ + Body: <encrypted>                             │
+    │─────────────▶│                                  │
+    │              │ POST /v1/chat/completions        │
+    │              │ + Authorization: Bearer <API_KEY>│
+    │              │ + Ehbp-Encapsulated-Key: <key>   │
+    │              │ + Body: <encrypted>              │
+    │              │─────────────────────────────────▶│
+    │              │◀─────────────────────────────────│
+    │              │ + Ehbp-Response-Nonce: <nonce>   │
+    │              │ + Body: <encrypted>              │
+    │◀─────────────│                                  │
+    │ + Ehbp-Response-Nonce: <nonce>                  │
+    │ + Body: <encrypted>                             │
+    │              │                                  │
+    │  (client decrypts response)                     │
+```
+
+The proxy adds authentication (Bearer) but cannot read the encrypted request/response bodies.
