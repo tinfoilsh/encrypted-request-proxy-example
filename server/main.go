@@ -26,6 +26,7 @@ var (
 
 func main() {
 	http.HandleFunc("/v1/chat/completions", proxyHandler)
+	http.HandleFunc("/attestation", attestationHandler)
 
 	log.Println("proxy listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -137,5 +138,40 @@ func copyHeaders(dst, src http.Header, keys ...string) {
 		if value := src.Get(key); value != "" {
 			dst.Set(key, value)
 		}
+	}
+}
+
+func attestationHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received attestation %s request from %s", r.Method, r.RemoteAddr)
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	resp, err := http.Get("https://atc.tinfoil.sh/attestation")
+	if err != nil {
+		log.Printf("Failed to fetch attestation bundle: %v", err)
+		http.Error(w, "Failed to fetch attestation bundle", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	if ct := resp.Header.Get("Content-Type"); ct != "" {
+		w.Header().Set("Content-Type", ct)
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	if _, copyErr := io.Copy(w, resp.Body); copyErr != nil {
+		log.Printf("attestation response copy failed: %v", copyErr)
 	}
 }
