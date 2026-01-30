@@ -9,7 +9,7 @@ The protocol encrypts HTTP message bodies using Hybrid Public Key Encryption (HP
 ```text
 ├── server/
 │   └── main.go          # Go proxy that adds API key and forwards requests
-├── examples/
+├── clients/
 │   ├── typescript/      # Browser-based TypeScript example
 │   │   ├── main.ts
 │   │   ├── index.html
@@ -47,7 +47,7 @@ export TINFOIL_API_KEY=tk-...
 cd server && go run main.go
 
 # Terminal 2 – serve the static files with Vite
-cd examples/typescript
+cd clients/typescript
 npm install
 npx vite
 ```
@@ -72,7 +72,7 @@ export TINFOIL_API_KEY=tk-...
 cd server && go run main.go
 
 # Terminal 2 – run the Swift example
-cd examples/swift
+cd clients/swift
 swift run
 ```
 
