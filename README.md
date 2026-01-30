@@ -1,5 +1,7 @@
 # Encrypted Request Proxying with Tinfoil
 
+[![Docs](https://img.shields.io/badge/docs-tinfoil.sh-blue)](https://docs.tinfoil.sh/guides/proxy-server)
+
 A small example that demonstrates how to proxy inference requests through third-party servers while preserving end-to-end encryption using the [Encrypted HTTP Body Protocol](https://github.com/tinfoilsh/encrypted-http-body-protocol).
 
 The protocol encrypts HTTP message bodies using Hybrid Public Key Encryption (HPKE) while preserving routing metadata, allowing proxies to inspect headers and route requests while keeping the actual payload encrypted end-to-end.
@@ -23,7 +25,7 @@ The protocol encrypts HTTP message bodies using Hybrid Public Key Encryption (HP
 
 In this example, the Go proxy:
 
-- Serves `/attestation` to proxy attestation bundle requests from Tinfoil's ATC
+- Serves `/attestation` to proxy attestation bundle requests from Tinfoil
 - Intercepts `/v1/chat/completions` and `/v1/responses` requests to:
   - Read the `X-Tinfoil-Enclave-Url` header to determine which enclave the client verified
   - Inspect and preserve EHBP-specific headers (`Ehbp-Encapsulated-Key` for requests, `Ehbp-Response-Nonce` for responses)
@@ -53,7 +55,9 @@ npx vite
 ```
 
 Open the printed Vite URL (typically http://localhost:5173), type a message, and
-watch the assistant stream its reply.
+watch the assistant stream its reply. All requests flow through the proxy. The SDK
+fetches enclave configuration from the attestation bundle and sends the enclave URL
+to the proxy via the `X-Tinfoil-Enclave-Url` header.
 
 ### Tweaks
 
@@ -61,8 +65,6 @@ watch the assistant stream its reply.
   proxy server or model. Defaults are `http://localhost:8080` and `gpt-oss-120b`.
 - The `attestationBundleURL` option routes attestation requests through the proxy,
   allowing all traffic to flow through a single endpoint.
-- The SDK fetches enclave configuration from the attestation bundle and sends
-  the enclave URL to the proxy via the `X-Tinfoil-Enclave-Url` header.
 
 ## Running the Swift Example
 
@@ -76,12 +78,9 @@ cd clients/swift
 swift run
 ```
 
-The Swift SDK will:
-
-1. Fetch available routers from Tinfoil
-2. Perform remote attestation to verify the enclave
-3. Set up EHBP encryption using the verified public key
-4. Send requests to the proxy at `http://localhost:8080` with the `X-Tinfoil-Enclave-Url` header
+All requests flow through the proxy. The SDK fetches enclave configuration from the
+attestation bundle and sends the enclave URL to the proxy via the `X-Tinfoil-Enclave-Url`
+header.
 
 ## Implementing Your Own Proxy
 
@@ -91,7 +90,7 @@ If you're building your own proxy server, here's what you need to implement:
 
 | Path | Method | Description |
 |------|--------|-------------|
-| `/attestation` | GET | Proxy to `https://atc.tinfoil.sh/attestation` |
+| `/attestation` | GET | Proxy attestation bundle requests to Tinfoil |
 | `/v1/chat/completions` | POST | Forward to the enclave URL from the `X-Tinfoil-Enclave-Url` header |
 | `/v1/responses` | POST | Forward to the enclave URL from the `X-Tinfoil-Enclave-Url` header |
 
@@ -115,9 +114,9 @@ If your proxy serves browser clients, configure CORS to:
 ### Request Flow
 
 ```
-┌────────┐     ┌───────┐     ┌─────────────┐     ┌─────────┐
-│ Client │────▶│ Proxy │────▶│ atc.tinfoil │     │ Enclave │
-└────────┘     └───────┘     └─────────────┘     └─────────┘
+┌────────┐     ┌───────┐     ┌─────────┐     ┌─────────┐
+│ Client │────▶│ Proxy │────▶│ Tinfoil │     │ Enclave │
+└────────┘     └───────┘     └─────────┘     └─────────┘
     │              │                                  │
     │ GET /attestation                                │
     │─────────────▶│ GET /attestation                 │
