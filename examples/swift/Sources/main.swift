@@ -11,19 +11,21 @@ struct TinfoilExample {
         do {
             print("Creating TinfoilAI client...")
             print("This will:")
-            print("  1. Fetch available routers from Tinfoil")
+            print("  1. Fetch attestation bundle through proxy")
             print("  2. Verify the enclave (remote attestation)")
             print("  3. Set up EHBP encryption")
             print("  4. Send requests through proxy at http://localhost:8080\n")
 
             let client = try await TinfoilAI.create(
                 baseURL: "http://localhost:8080",
+                attestationBundleURL: "http://localhost:8080",
                 onVerification: { doc in
                     if let doc = doc {
                         print("Verification completed:")
+                        print("  Enclave host: \(doc.enclaveHost)")
                         print("  Code fingerprint: \(doc.codeFingerprint)")
                         print("  Enclave fingerprint: \(doc.enclaveFingerprint)")
-                        print("  All steps succeeded: \(doc.allStepsSucceeded)\n")
+                        print("  Security verified: \(doc.securityVerified)\n")
                     }
                 }
             )
