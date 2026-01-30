@@ -7,7 +7,7 @@ let package = Package(
         .macOS(.v14)
     ],
     dependencies: [
-        .package(url: "https://github.com/tinfoilsh/tinfoil-swift", from: "0.3.2")
+        .package(url: "https://github.com/tinfoilsh/tinfoil-swift", from: "0.4.0")
     ],
     targets: [
         .executableTarget(
