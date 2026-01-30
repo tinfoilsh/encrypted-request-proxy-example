@@ -132,29 +132,16 @@ async function sendMessage(): Promise<void> {
       stream: true,
     });
 
-    let response: Response;
-    try {
-      response = await client.fetch("/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-          // Optional: Add custom headers that your proxy can read and strip
-          "Your-Custom-Request-Header": "custom-value",
-        },
-        body: requestBody,
-      });
-    } catch (fetchError) {
-      // If the proxy returns an unencrypted error (missing EHBP headers),
-      // try a plain fetch to get the actual error message
-      const plainResponse = await fetch("http://localhost:8080/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: requestBody,
-      });
-      const errorText = await plainResponse.text();
-      throw new Error(errorText || (fetchError instanceof Error ? fetchError.message : "Request failed"));
-    }
+    const response = await client.fetch("/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        // Optional: Add custom headers that your proxy can read and strip
+        "Your-Custom-Request-Header": "custom-value",
+      },
+      body: requestBody,
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
