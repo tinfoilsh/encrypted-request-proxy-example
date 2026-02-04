@@ -11,10 +11,14 @@ const (
 	// Header containing the enclave URL that the client verified
 	enclaveURLHeader = "X-Tinfoil-Enclave-Url"
 
-	// Add custom headers to allowHeaders to allow them through CORS
+	// Tinfoil usage metrics headers
+	usageMetricsRequestHeader  = "X-Tinfoil-Request-Usage-Metrics"
+	usageMetricsResponseHeader = "X-Tinfoil-Usage-Metrics"
+
+	// CORS headers allowed in requests (add your custom headers here)
 	allowHeaders = "Accept, Authorization, Content-Type, Ehbp-Encapsulated-Key, X-Tinfoil-Enclave-Url, Your-Custom-Request-Header"
 
-	// Add custom headers to exposeHeaders to make them readable by the browser
+	// CORS headers exposed to the browser in responses (add your custom headers here)
 	exposeHeaders = "Ehbp-Response-Nonce, Your-Custom-Response-Header"
 )
 
@@ -76,6 +80,9 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
+	// Request usage metrics from Tinfoil for billing
+	req.Header.Set(usageMetricsRequestHeader, "true")
+
 	// Required: Copy encryption headers from the client request
 	copyHeaders(req.Header, r.Header, ehbpRequestHeaders...)
 
@@ -99,8 +106,14 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", ct)
 	}
 
+	// Log usage metrics from response header (non-streaming) for billing
+	if usage := resp.Header.Get(usageMetricsResponseHeader); usage != "" {
+		log.Printf("Usage metrics (header): %s", usage)
+	}
+
 	// Optional: Add custom headers to the response based on proxy logic
 	w.Header().Set("Your-Custom-Response-Header", "response-value")
+
 	if te := resp.Header.Get("Transfer-Encoding"); te != "" {
 		w.Header().Set("Transfer-Encoding", te)
 		w.Header().Del("Content-Length")
@@ -113,11 +126,15 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		if _, copyErr := io.Copy(&fw, resp.Body); copyErr != nil {
 			log.Printf("stream copy failed: %v", copyErr)
 		}
-		return
+	} else {
+		if _, copyErr := io.Copy(w, resp.Body); copyErr != nil {
+			log.Printf("response copy failed: %v", copyErr)
+		}
 	}
 
-	if _, copyErr := io.Copy(w, resp.Body); copyErr != nil {
-		log.Printf("response copy failed: %v", copyErr)
+	// After body is fully read, log usage metrics from trailer (streaming) for billing
+	if usage := resp.Trailer.Get(usageMetricsResponseHeader); usage != "" {
+		log.Printf("Usage metrics (trailer): %s", usage)
 	}
 }
 
