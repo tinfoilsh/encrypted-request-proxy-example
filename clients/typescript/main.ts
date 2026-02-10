@@ -1,4 +1,4 @@
-import { SecureClient } from "tinfoil";
+import { SecureClient, FetchError, AttestationError } from "tinfoil";
 
 type Role = "user" | "assistant";
 
@@ -39,7 +39,10 @@ function appendMessage(text: string, role: Role): HTMLDivElement {
   return bubble;
 }
 
-function processEvent(payload: string, onChunk: (text: string) => void): boolean {
+function processEvent(
+  payload: string,
+  onChunk: (text: string) => void,
+): boolean {
   if (payload === "[DONE]") {
     return true;
   }
@@ -47,7 +50,9 @@ function processEvent(payload: string, onChunk: (text: string) => void): boolean
   try {
     const message = JSON.parse(payload);
     const text =
-      message.choices?.[0]?.delta?.content ?? message.choices?.[0]?.message?.content ?? "";
+      message.choices?.[0]?.delta?.content ??
+      message.choices?.[0]?.message?.content ??
+      "";
 
     if (text) {
       onChunk(text);
@@ -64,7 +69,10 @@ function processEvent(payload: string, onChunk: (text: string) => void): boolean
   return false;
 }
 
-async function streamResponse(response: Response, onChunk: (text: string) => void) {
+async function streamResponse(
+  response: Response,
+  onChunk: (text: string) => void,
+) {
   const body = response.body;
   if (!body) return;
 
@@ -75,7 +83,7 @@ async function streamResponse(response: Response, onChunk: (text: string) => voi
 
   const flush = (final = false) => {
     const segments = buffer.split("\n\n");
-    buffer = final ? "" : segments.pop() ?? "";
+    buffer = final ? "" : (segments.pop() ?? "");
 
     for (const segment of segments) {
       const dataLines = segment
@@ -123,8 +131,21 @@ async function sendMessage(): Promise<void> {
   sendButton.disabled = true;
 
   try {
-    // Wait for the client to fetch encryption keys and perform verification
-    await client.ready();
+    // Wait for the client to complete attestation verification.
+    // FetchError: transient network issue -- just call ready() again to retry.
+    // AttestationError: security issue -- call reset() to get a fresh bundle and re-verify.
+    try {
+      await client.ready();
+    } catch (err) {
+      if (err instanceof FetchError) {
+        await client.ready();
+      } else if (err instanceof AttestationError) {
+        client.reset();
+        await client.ready();
+      } else {
+        throw err;
+      }
+    }
 
     const requestBody = JSON.stringify({
       model: "gpt-oss-120b", // switch model to any model available in the tinfoil inference api: https://tinfoil.sh/inference
@@ -163,10 +184,12 @@ async function sendMessage(): Promise<void> {
     }
 
     const json = await response.json();
-    assistantBubble.textContent = json.choices?.[0]?.message?.content ?? "No content";
+    assistantBubble.textContent =
+      json.choices?.[0]?.message?.content ?? "No content";
   } catch (error) {
     console.error("Chat request failed", error);
-    const message = error instanceof Error ? error.message : "Could not connect to server";
+    const message =
+      error instanceof Error ? error.message : "Could not connect to server";
     appendMessage(`Error: ${message}`, "assistant");
   } finally {
     sendButton.disabled = false;
