@@ -1,4 +1,4 @@
-import { SecureClient, FetchError, AttestationError } from "tinfoil";
+import { SecureClient, TinfoilError, AttestationError } from "tinfoil";
 
 type Role = "user" | "assistant";
 
@@ -132,12 +132,12 @@ async function sendMessage(): Promise<void> {
 
   try {
     // Wait for the client to complete attestation verification.
-    // FetchError: transient network issue -- just call ready() again to retry.
+    // TinfoilError: transient network issue -- just call ready() again to retry.
     // AttestationError: security issue -- call reset() to get a fresh bundle and re-verify.
     try {
       await client.ready();
     } catch (err) {
-      if (err instanceof FetchError) {
+      if (err instanceof TinfoilError) {
         await client.ready();
       } else if (err instanceof AttestationError) {
         client.reset();
