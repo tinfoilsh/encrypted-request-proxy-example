@@ -36,7 +36,7 @@ struct TinfoilExample {
                 messages: [
                     .user(.init(content: .string("Say hello in exactly 5 words.")))
                 ],
-                model: "gpt-oss-120b-free"
+                model: "gpt-oss-120b"
             )
 
             print("--- Streaming Response ---")
@@ -53,7 +53,7 @@ struct TinfoilExample {
         } catch TinfoilError.missingAPIKey {
             print("Error: API key not found.")
             print("Set the TINFOIL_API_KEY environment variable:")
-            print("  export TINFOIL_API_KEY=tk-your-key-here")
+            print("  export TINFOIL_API_KEY=<YOUR_API_KEY>")
 
         } catch {
             print("Error: \(error)")
